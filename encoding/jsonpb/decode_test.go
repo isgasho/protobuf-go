@@ -12,6 +12,7 @@ import (
 	"github.com/golang/protobuf/v2/encoding/jsonpb"
 	"github.com/golang/protobuf/v2/encoding/testprotos/pb2"
 	"github.com/golang/protobuf/v2/encoding/testprotos/pb3"
+	"github.com/golang/protobuf/v2/internal/encoding/pack"
 	"github.com/golang/protobuf/v2/internal/scalar"
 	"github.com/golang/protobuf/v2/proto"
 	preg "github.com/golang/protobuf/v2/reflect/protoregistry"
@@ -2130,14 +2131,11 @@ func TestUnmarshal(t *testing.T) {
   "value": "` + "abc\xff" + `"
 }`,
 		wantMessage: func() proto.Message {
-			m := &knownpb.StringValue{Value: "abc\xff"}
-			b, err := proto.MarshalOptions{Deterministic: true}.Marshal(m)
-			if err != nil {
-				t.Fatalf("error in binary marshaling message for Any.value: %v", err)
-			}
 			return &knownpb.Any{
 				TypeUrl: "google.protobuf.StringValue",
-				Value:   b,
+				Value: pack.Message{
+					pack.Tag{1, pack.BytesType}, pack.String("abc\xff"),
+				}.Marshal(),
 			}
 		}(),
 		wantErr: true,
@@ -2369,17 +2367,14 @@ func TestUnmarshal(t *testing.T) {
   }
 }`,
 		wantMessage: func() proto.Message {
-			m1 := &knownpb.StringValue{Value: "abc\xff"}
-			b, err := proto.MarshalOptions{Deterministic: true}.Marshal(m1)
-			if err != nil {
-				t.Fatalf("error in binary marshaling message for Any.value: %v", err)
-			}
 			m2 := &knownpb.Any{
 				TypeUrl: "google.protobuf.StringValue",
-				Value:   b,
+				Value: pack.Message{
+					pack.Tag{1, pack.BytesType}, pack.String("abc\xff"),
+				}.Marshal(),
 			}
 			m3 := &pb2.KnownTypes{OptAny: m2}
-			b, err = proto.MarshalOptions{Deterministic: true}.Marshal(m3)
+			b, err := proto.MarshalOptions{Deterministic: true}.Marshal(m3)
 			if err != nil {
 				t.Fatalf("error in binary marshaling message for Any.value: %v", err)
 			}

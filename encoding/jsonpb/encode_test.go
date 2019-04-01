@@ -1687,14 +1687,11 @@ func TestMarshal(t *testing.T) {
 			Resolver: preg.NewTypes((&knownpb.StringValue{}).ProtoReflect().Type()),
 		},
 		input: func() proto.Message {
-			m := &knownpb.StringValue{Value: "abc\xff"}
-			b, err := proto.MarshalOptions{Deterministic: true}.Marshal(m)
-			if err != nil {
-				t.Fatalf("error in binary marshaling message for Any.value: %v", err)
-			}
 			return &knownpb.Any{
 				TypeUrl: "google.protobuf.StringValue",
-				Value:   b,
+				Value: pack.Message{
+					pack.Tag{1, pack.BytesType}, pack.String("abc\xff"),
+				}.Marshal(),
 			}
 		}(),
 		want: `{

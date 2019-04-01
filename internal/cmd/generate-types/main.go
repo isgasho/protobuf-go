@@ -40,6 +40,7 @@ func main() {
 	chdirRoot()
 	writeSource("internal/fileinit/desc_list_gen.go", generateFileinitDescList())
 	writeSource("internal/prototype/protofile_list_gen.go", generateListTypes())
+	writeSource("internal/impl/encode_gen.go", generateImplEncode())
 	writeSource("proto/decode_gen.go", generateProtoDecode())
 	writeSource("proto/encode_gen.go", generateProtoEncode())
 	writeSource("proto/size_gen.go", generateProtoSize())
@@ -311,6 +312,7 @@ func writeSource(file, src string) {
 	for _, pkg := range []string{
 		"fmt",
 		"math",
+		"reflect",
 		"sync",
 		"",
 		"github.com/golang/protobuf/v2/internal/encoding/wire",
@@ -318,6 +320,7 @@ func writeSource(file, src string) {
 		"github.com/golang/protobuf/v2/internal/pragma",
 		"github.com/golang/protobuf/v2/internal/typefmt",
 		"github.com/golang/protobuf/v2/reflect/protoreflect",
+		"github.com/golang/protobuf/v2/runtime/protoiface",
 	} {
 		if pkg == "" {
 			imports = append(imports, "") // blank line between stdlib and proto packages
@@ -340,7 +343,11 @@ func writeSource(file, src string) {
 		src,
 	}, "\n")
 	b, err := format.Source([]byte(s))
-	check(err)
+	if err != nil {
+		// Just print the error and output the unformatted file for examination.
+		fmt.Fprintf(os.Stderr, "%v:%v\n", file, err)
+		b = []byte(s)
+	}
 
 	absFile := filepath.Join(repoRoot, file)
 	if run {

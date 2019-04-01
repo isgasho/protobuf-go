@@ -16,6 +16,8 @@ import (
 	"github.com/golang/protobuf/v2/proto"
 	pref "github.com/golang/protobuf/v2/reflect/protoreflect"
 
+	legacypb "github.com/golang/protobuf/v2/internal/testprotos/legacy"
+	legacy1pb "github.com/golang/protobuf/v2/internal/testprotos/legacy/proto2.v0.0.0-20160225-2fc053c5"
 	testpb "github.com/golang/protobuf/v2/internal/testprotos/test"
 	test3pb "github.com/golang/protobuf/v2/internal/testprotos/test3"
 )
@@ -759,6 +761,18 @@ var testProtos = []testProto{
 		})}.Marshal(),
 	},
 	{
+		desc: "oneof (empty message)",
+		decodeTo: []proto.Message{
+			&testpb.TestAllTypes{OneofField: &testpb.TestAllTypes_OneofNestedMessage{
+				&testpb.TestAllTypes_NestedMessage{},
+			}},
+			&test3pb.TestAllTypes{OneofField: &test3pb.TestAllTypes_OneofNestedMessage{
+				&test3pb.TestAllTypes_NestedMessage{},
+			}},
+		},
+		wire: pack.Message{pack.Tag{112, pack.BytesType}, pack.LengthPrefix(pack.Message{})}.Marshal(),
+	},
+	{
 		desc: "oneof (overridden message)",
 		decodeTo: []proto.Message{
 			&testpb.TestAllTypes{OneofField: &testpb.TestAllTypes_OneofNestedMessage{
@@ -840,6 +854,14 @@ var testProtos = []testProto{
 			&test3pb.TestAllTypes{OneofField: &test3pb.TestAllTypes_OneofEnum{test3pb.TestAllTypes_BAR}},
 		},
 		wire: pack.Message{pack.Tag{119, pack.VarintType}, pack.Varint(int(testpb.TestAllTypes_BAR))}.Marshal(),
+	},
+	{
+		desc: "oneof (zero)",
+		decodeTo: []proto.Message{
+			&testpb.TestAllTypes{OneofField: &testpb.TestAllTypes_OneofUint64{0}},
+			&test3pb.TestAllTypes{OneofField: &test3pb.TestAllTypes_OneofUint64{0}},
+		},
+		wire: pack.Message{pack.Tag{116, pack.VarintType}, pack.Varint(0)}.Marshal(),
 	},
 	{
 		desc: "oneof (overridden value)",
@@ -1153,6 +1175,65 @@ var testProtos = []testProto{
 			}),
 			pack.Tag{1001, pack.BytesType}, pack.LengthPrefix(pack.Message{
 				pack.Tag{1, pack.VarintType}, pack.Varint(2),
+			}),
+		}.Marshal(),
+	},
+	{
+		desc:    "legacy",
+		partial: true,
+		decodeTo: []proto.Message{
+			&legacypb.Legacy{
+				F1: &legacy1pb.Message{
+					OptionalInt32:     scalar.Int32(1),
+					OptionalChildEnum: legacy1pb.Message_ALPHA.Enum(),
+					OptionalChildMessage: &legacy1pb.Message_ChildMessage{
+						F1: scalar.String("x"),
+					},
+					Optionalgroup: &legacy1pb.Message_OptionalGroup{
+						F1: scalar.String("x"),
+					},
+					RepeatedChildMessage: []*legacy1pb.Message_ChildMessage{
+						{F1: scalar.String("x")},
+					},
+					Repeatedgroup: []*legacy1pb.Message_RepeatedGroup{
+						{F1: scalar.String("x")},
+					},
+					MapBoolChildMessage: map[bool]*legacy1pb.Message_ChildMessage{
+						true: {F1: scalar.String("x")},
+					},
+					OneofUnion: &legacy1pb.Message_OneofChildMessage{
+						&legacy1pb.Message_ChildMessage{
+							F1: scalar.String("x"),
+						},
+					},
+				},
+			},
+		},
+		wire: pack.Message{
+			pack.Tag{1, pack.BytesType}, pack.LengthPrefix(pack.Message{
+				pack.Tag{101, pack.VarintType}, pack.Varint(1),
+				pack.Tag{115, pack.VarintType}, pack.Varint(0),
+				pack.Tag{116, pack.BytesType}, pack.LengthPrefix(pack.Message{
+					pack.Tag{1, pack.BytesType}, pack.String("x"),
+				}),
+				pack.Tag{120, pack.StartGroupType},
+				pack.Tag{1, pack.BytesType}, pack.String("x"),
+				pack.Tag{120, pack.EndGroupType},
+				pack.Tag{516, pack.BytesType}, pack.LengthPrefix(pack.Message{
+					pack.Tag{1, pack.BytesType}, pack.String("x"),
+				}),
+				pack.Tag{520, pack.StartGroupType},
+				pack.Tag{1, pack.BytesType}, pack.String("x"),
+				pack.Tag{520, pack.EndGroupType},
+				pack.Tag{616, pack.BytesType}, pack.LengthPrefix(pack.Message{
+					pack.Tag{1, pack.VarintType}, pack.Varint(1),
+					pack.Tag{2, pack.BytesType}, pack.LengthPrefix(pack.Message{
+						pack.Tag{1, pack.BytesType}, pack.String("x"),
+					}),
+				}),
+				pack.Tag{716, pack.BytesType}, pack.LengthPrefix(pack.Message{
+					pack.Tag{1, pack.BytesType}, pack.String("x"),
+				}),
 			}),
 		}.Marshal(),
 	},
